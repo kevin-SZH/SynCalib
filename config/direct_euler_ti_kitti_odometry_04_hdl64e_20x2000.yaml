@@ -1,0 +1,142 @@
+# Direct-Euler Ti dataset for the KITTI Odometry 04 left color camera and HDL-64E.
+# Generates 2,000 pairs for each of 20 TartanGround scenes.
+schema_version: stochastic_generation_task_v5
+target_network: calibnet
+
+# The nominal extrinsic satisfies p_camera2 = T0 @ p_velodyne in meters.
+# T0 combines sequence 04 P2 and Tr so K @ T0 matches P2 @ Tr; its rotation is
+# projected to the nearest SO(3) matrix at the calibration text precision.
+nominal_extrinsic:
+  schema_version: nominal_extrinsic_v1
+  configured: true
+  t0_id: kitti_odometry_04_velodyne_to_rectified_camera2
+  transform_direction: lidar_to_camera
+  matrix:
+    - [-0.0018577390032824, -0.9999659532257913, -0.0080399748151911, 0.0562465542111915]
+    - [-0.0064814656611573, 0.0080518603122471, -0.9999465776472234, -0.0748140163427345]
+    - [0.9999772694460001, -0.0018055289378130, -0.0064962032431104, -0.3277935834433000]
+    - [0.0, 0.0, 0.0, 1.0]
+
+# Split complete source scenes before deriving samples; do not split frames later.
+source:
+  dataset: tartanground
+  trajectory: P0000
+  scene_splits:
+    train:
+      - AncientTowns
+      - Antiquity3D
+      - ConstructionSite
+      - Fantasy
+      - House
+      - Hospital
+      - JapaneseAlley
+      - JapaneseCity
+      - MiddleEast
+      - ModUrbanCity
+      - ModularNeighborhoodIntExt
+      - Office
+      - OldBrickHouseDay
+      - OldTownFall
+      - Rome
+      - VictorianStreet
+    val: []
+    test:
+      - Downtown
+      - OldTownSummer
+      - Restaurant
+      - UrbanConstruction
+
+sensor:
+  profile: kitti_odometry_04_12_rectified_hdl64e
+  camera:
+    # Rectified left color camera P2 from KITTI Odometry sequence 04.
+    width: 1226
+    height: 370
+    fx: 707.0912
+    fy: 707.0912
+    cx: 601.8873
+    cy: 183.1104
+    skew: 0.0
+    model: pinhole_rectified
+  lidar:
+    # Deterministic ring-azimuth grid used by the project HDL-64E profile.
+    scanner_model: velodyne_hdl64e
+    num_rings: 64
+    points_per_ring: 2083
+    vertical_fov_deg: [-24.9, 2.0]
+    horizontal_fov_deg: [-180.0, 180.0]
+    repeated_pattern: true
+    min_range_m: 0.9
+    max_range_m: 120.0
+
+pair_quality:
+  geometry:
+    pano_height: 64
+    surface_relative_tolerance: 0.05
+    depth_cache_size: 8192
+  gate:
+    min_symmetric_surface_overlap_ratio: 0.30
+
+# Post-generation quality thresholds for the 1226x370 KITTI camera task.
+quality:
+  visibility_abs_tolerance_m: 0.20
+  visibility_rel_tolerance: 0.05
+  alpha_radius_px: 16.0
+  min_true_projection_coverage_ratio: 0.40
+  max_true_occluded_area_ratio: 0.20
+  min_nominal_projection_coverage_ratio: 0.30
+  depth_sobel_gradient_threshold_m_per_px: 0.03
+  min_true_sobel_edge_pixel_ratio: 0.05
+  min_true_sobel_direction_diversity: 0.40
+  sobel_direction_histogram_bin_deg: 10
+  sobel_direction_mode_support_half_width_deg: 15
+  min_true_sobel_direction_mode_separation_deg: 30
+  min_true_sobel_second_mode_ratio: 0.25
+  min_true_sobel_third_mode_ratio: 0.10
+
+coverage:
+  mode: direct_euler_component_box
+  bins_per_axis: 5
+
+all_configured_scenes_per_level: true
+coverage_scope: per_curriculum_level_and_split_across_scenes
+
+pair_sampling:
+  max_pose_translation_distance_m: 2.0
+  ordered_frame_roles: true
+
+runtime:
+  depth_cache_max_mb: 6144
+  rgb_cache_max_mb: 2048
+  opencv_threads_per_worker: 1
+  numeric_threads_per_worker: 1
+  progress_interval_seconds: 10.0
+  max_consecutive_attempts_without_acceptance: 500
+  incremental_persistence: true
+  direct_output_persistence: false
+
+sampling:
+  seed: 42
+  max_attempts_per_accepted: null
+  max_accepted_per_pair: 4
+  residual_sampler:
+    mode: direct_left_euler_box
+    rejection_policy: exhaust_scale_feasible_pairs_then_resample
+    max_samples_per_residual: 4
+    max_realization_attempts_per_residual: 100
+  accepted_distribution_control: report_only
+  view_rotation_distribution: target_translation_conditioned_uniform_roll
+  camera_optical_axis_latitude_band:
+    enabled: true
+    max_abs_latitude_deg: 10.0
+  scale:
+    min: 0.2
+    max: 5.0
+    distribution: solved_from_target_translation
+
+curriculum:
+  levels:
+    - name: perturbed_t0
+      max_euler_component_deg: 10.0
+      max_translation_component_m: 0.2
+      accepted_samples_per_sequence: 2000

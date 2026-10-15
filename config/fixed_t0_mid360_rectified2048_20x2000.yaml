@@ -1,0 +1,206 @@
+# Fixed-T0 dataset for a 2048x1536 rectified camera and MID-360.
+# Generates 2,000 pairs for each of 20 TartanGround scenes.
+schema_version: stochastic_generation_task_v5
+target_network: calibnet
+
+# Full nominal LiDAR-to-camera T0 under the column-vector convention.
+# R is the nearest SO(3) projection of six-decimal Rcl (max correction 5.32e-7);
+# Pcl is unchanged.
+nominal_extrinsic:
+  schema_version: nominal_extrinsic_v1
+  configured: true
+  t0_id: mid360_to_rectified_camera_2048x1536_t0
+  transform_direction: lidar_to_camera
+  matrix:
+    - [0.0337193469606107, -0.9990801414952617, 0.0264929520884036, -0.093736]
+    - [0.3611560915726021, -0.0125361716756299, -0.9324211076116428, -0.012541]
+    - [0.9318955323213822, 0.0410087218714221, 0.3604011675479427, -0.004569]
+    - [0.0, 0.0, 0.0, 1.0]
+
+# Split complete source scenes before deriving samples; do not split frames later.
+source:
+  dataset: tartanground
+  trajectory: P0000
+  scene_splits:
+    train:
+      - AncientTowns
+      - Antiquity3D
+      - ConstructionSite
+      - Fantasy
+      - House
+      - Hospital
+      - JapaneseAlley
+      - JapaneseCity
+      - MiddleEast
+      - ModUrbanCity
+      - ModularNeighborhoodIntExt
+      - Office
+      - OldBrickHouseDay
+      - OldTownFall
+      - Rome
+      - VictorianStreet
+    val: []
+    test:
+      - Downtown
+      - OldTownSummer
+      - Restaurant
+      - UrbanConstruction
+
+sensor:
+  profile: livox_mid360_nonrepeating
+  camera:
+    # Synthetic and real training images use rectified pinhole semantics with this K.
+    width: 2048
+    height: 1536
+    fx: 1205.339
+    fy: 1203.925
+    cx: 1016.881
+    cy: 799.783
+    skew: 0.0
+    model: pinhole_rectified
+  lidar:
+    scanner_model: livox_mid360
+    num_rings: 4
+    points_per_ring: 5000
+    vertical_fov_deg: [-7.2123, 52.164]
+    horizontal_fov_deg: [0.0, 360.0]
+    repeated_pattern: false
+    min_range_m: 0.1
+    max_range_m: 70.0
+    beam_pattern_file: mid360.csv
+    pattern_duration_s: 4.0
+    scan_frequency_hz: 10.0
+    beams_per_frame: 20000
+    # Beam count is 20,000 * 10 Hz * duration; latest start is 4.0 s - duration.
+    accumulation_duration_s: 0.5
+    interleaved_channels: 4
+    pattern_row_count: 800000
+
+pair_quality:
+  geometry:
+    pano_height: 64
+    surface_relative_tolerance: 0.05
+    depth_cache_size: 8192
+  gate:
+    min_symmetric_surface_overlap_ratio: 0.30
+
+quality:
+  visibility_abs_tolerance_m: 0.20
+  visibility_rel_tolerance: 0.05
+  # Alpha Complex uses Delaunay circumradii to separate dense support from holes.
+  alpha_radius_px: 30.0
+  min_true_projection_coverage_ratio: 0.40
+  # Occluded Ti Alpha area may cover at most 20% of the full Ti projection area.
+  max_true_occluded_area_ratio: 0.20
+  min_nominal_projection_coverage_ratio: 0.30
+  depth_sobel_gradient_threshold_m_per_px: 0.03
+  min_true_sobel_edge_pixel_ratio: 0.05
+  min_true_sobel_direction_diversity: 0.40
+  sobel_direction_histogram_bin_deg: 10
+  sobel_direction_mode_support_half_width_deg: 15
+  min_true_sobel_direction_mode_separation_deg: 30
+  min_true_sobel_second_mode_ratio: 0.25
+  min_true_sobel_third_mode_ratio: 0.10
+
+coverage:
+  mode: fixed_identity
+
+all_configured_scenes_per_level: true
+coverage_scope: per_curriculum_level_and_split_across_scenes
+
+pair_sampling:
+  max_pose_translation_distance_m: 2.0
+  ordered_frame_roles: true
+
+runtime:
+  depth_cache_max_mb: 6144
+  rgb_cache_max_mb: 2048
+  opencv_threads_per_worker: 1
+  numeric_threads_per_worker: 1
+  progress_interval_seconds: 10.0
+  max_consecutive_attempts_without_acceptance: null
+  incremental_persistence: true
+  direct_output_persistence: false
+
+sampling:
+  seed: 42
+  max_attempts_per_accepted: null
+  max_accepted_per_pair: 4
+  residual_sampler:
+    mode: fixed_identity
+  accepted_distribution_control: report_only
+  view_rotation_distribution: target_translation_conditioned_uniform_roll
+  scale:
+    min: 0.2
+    max: 5.0
+    distribution: solved_from_target_translation
+    # Per-scene ranges use 512 fixed-T0 views at seed 42. Candidates require scaled
+    # depth P05 >= 0.3 m and P95 <= 60 m; bounds are the accepted scale P05-P95.
+    # by_scene:
+    #   AncientTowns:
+    #     min: 0.185207
+    #     max: 1.136428
+    #   Antiquity3D:
+    #     min: 0.233058
+    #     max: 0.593340
+    #   ConstructionSite:
+    #     min: 0.128581
+    #     max: 0.460332
+    #   Downtown:
+    #     min: 0.206541
+    #     max: 0.418209
+    #   Fantasy:
+    #     min: 0.182897
+    #     max: 1.483306
+    #   Hospital:
+    #     min: 0.173404
+    #     max: 1.326972
+    #   House:
+    #     min: 0.280482
+    #     max: 1.485897
+    #   JapaneseAlley:
+    #     min: 0.117422
+    #     max: 1.350832
+    #   JapaneseCity:
+    #     min: 0.178053
+    #     max: 1.036016
+    #   MiddleEast:
+    #     min: 0.131484
+    #     max: 1.156370
+    #   ModUrbanCity:
+    #     min: 0.188249
+    #     max: 0.862936
+    #   ModularNeighborhoodIntExt:
+    #     min: 0.115508
+    #     max: 0.373404
+    #   Office:
+    #     min: 0.154143
+    #     max: 1.025437
+    #   OldBrickHouseDay:
+    #     min: 0.150271
+    #     max: 1.308173
+    #   OldTownFall:
+    #     min: 0.116330
+    #     max: 0.591818
+    #   OldTownSummer:
+    #     min: 0.143793
+    #     max: 0.439785
+    #   Restaurant:
+    #     min: 0.276456
+    #     max: 1.648629
+    #   Rome:
+    #     min: 0.134528
+    #     max: 1.107906
+    #   UrbanConstruction:
+    #     min: 0.114956
+    #     max: 0.387966
+    #   VictorianStreet:
+    #     min: 0.132885
+    #     max: 1.084612
+
+curriculum:
+  levels:
+    - name: fixed_baseline
+      online_max_rotation_vector_component_deg: 10.0
+      online_max_translation_component_m: 0.2
+      accepted_samples_per_sequence: 2000

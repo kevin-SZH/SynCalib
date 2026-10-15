@@ -1,0 +1,149 @@
+# Direct-Euler Ti dataset for a 2048x1536 rectified camera and 10 Hz RS32.
+# Generates 2,000 pairs for each of 20 TartanGround scenes.
+schema_version: stochastic_generation_task_v5
+target_network: calibnet
+
+# The nominal extrinsic satisfies p_camera = T0 @ p_lidar in meters.
+# RS32 shares the simulated LiDAR origin and mount with the earlier task; this is
+# not a physical RS32 calibration. R is projected to SO(3) (max correction 5.43e-7).
+nominal_extrinsic:
+  schema_version: nominal_extrinsic_v1
+  configured: true
+  t0_id: rs32_to_rectified_camera_2048x1536_shared_sim_origin_t0
+  transform_direction: lidar_to_camera
+  matrix:
+    - [0.0292792523950438, -0.9989833085542218, 0.0342793612724481, 0.203186]
+    - [0.0500889167470011, -0.0327846479429386, -0.9982065253635486, 0.036896]
+    - [0.9983154941191182, 0.0309437568714149, 0.0490780817920123, -0.054624]
+    - [0.0, 0.0, 0.0, 1.0]
+
+# Split complete source scenes before deriving samples; do not split frames later.
+source:
+  dataset: tartanground
+  trajectory: P0000
+  scene_splits:
+    train:
+      - AncientTowns
+      - Antiquity3D
+      - ConstructionSite
+      - Fantasy
+      - House
+      - Hospital
+      - JapaneseAlley
+      - JapaneseCity
+      - MiddleEast
+      - ModUrbanCity
+      - ModularNeighborhoodIntExt
+      - Office
+      - OldBrickHouseDay
+      - OldTownFall
+      - Rome
+      - VictorianStreet
+    val: []
+    test:
+      - Downtown
+      - OldTownSummer
+      - Restaurant
+      - UrbanConstruction
+
+sensor:
+  profile: robosense_rs32_nonuniform_repeated_ring
+  camera:
+    # Original FAST-LIVO2 scale-1.0 pinhole radtan coefficients:
+    # [-0.0863808, 0.079583, -0.000322155, 0.000319791]。
+    # Synthetic and real training images use rectified pinhole semantics with this K.
+    width: 2048
+    height: 1536
+    fx: 1207.6590132
+    fy: 1205.79905352
+    cx: 1007.86825845
+    cy: 764.89346874
+    skew: 0.0
+    model: pinhole_rectified
+  lidar:
+    # At 600 RPM, one return contains 1,801 azimuth blocks: 32*1,801=57,632 beams.
+    # rs32.csv comes from RoboSense ros_rslidar commit 76de441cde19fd65ad0ef1f3d20d9eb6915994d7.
+    # Columns are hardware-channel elevation and driver-frame azimuth correction (deg).
+    scanner_model: robosense_rs32
+    num_rings: 32
+    points_per_ring: 1801
+    vertical_fov_deg: [-25.0, 15.0167]
+    horizontal_fov_deg: [-180.0, 180.0]
+    repeated_pattern: true
+    channel_calibration_file: rs32.csv
+    min_range_m: 0.4
+    max_range_m: 200.0
+    scan_frequency_hz: 10.0
+    beams_per_frame: 57632
+
+pair_quality:
+  geometry:
+    pano_height: 64
+    surface_relative_tolerance: 0.05
+    depth_cache_size: 8192
+  gate:
+    min_symmetric_surface_overlap_ratio: 0.30
+
+# Initial 2048-camera thresholds; review against the RS32 audit before a full build.
+quality:
+  visibility_abs_tolerance_m: 0.20
+  visibility_rel_tolerance: 0.05
+  alpha_radius_px: 30.0
+  min_true_projection_coverage_ratio: 0.20
+  max_true_occluded_area_ratio: 0.20
+  min_nominal_projection_coverage_ratio: 0.20
+  depth_sobel_gradient_threshold_m_per_px: 0.03
+  min_true_sobel_edge_pixel_ratio: 0.05
+  min_true_sobel_direction_diversity: 0.40
+  sobel_direction_histogram_bin_deg: 10
+  sobel_direction_mode_support_half_width_deg: 15
+  min_true_sobel_direction_mode_separation_deg: 30
+  min_true_sobel_second_mode_ratio: 0.25
+  min_true_sobel_third_mode_ratio: 0.10
+
+coverage:
+  mode: direct_euler_component_box
+  bins_per_axis: 5
+
+all_configured_scenes_per_level: true
+coverage_scope: per_curriculum_level_and_split_across_scenes
+
+pair_sampling:
+  max_pose_translation_distance_m: 2.0
+  ordered_frame_roles: true
+
+runtime:
+  depth_cache_max_mb: 6144
+  rgb_cache_max_mb: 2048
+  opencv_threads_per_worker: 1
+  numeric_threads_per_worker: 1
+  progress_interval_seconds: 10.0
+  max_consecutive_attempts_without_acceptance: 500
+  incremental_persistence: true
+  direct_output_persistence: false
+
+sampling:
+  seed: 42
+  max_attempts_per_accepted: null
+  max_accepted_per_pair: 4
+  residual_sampler:
+    mode: direct_left_euler_box
+    rejection_policy: exhaust_scale_feasible_pairs_then_resample
+    max_samples_per_residual: 4
+    max_realization_attempts_per_residual: 100
+  accepted_distribution_control: report_only
+  view_rotation_distribution: target_translation_conditioned_uniform_roll
+  camera_optical_axis_latitude_band:
+    enabled: true
+    max_abs_latitude_deg: 10.0
+  scale:
+    min: 0.2
+    max: 5.0
+    distribution: solved_from_target_translation
+
+curriculum:
+  levels:
+    - name: perturbed_t0
+      max_euler_component_deg: 10.0
+      max_translation_component_m: 0.2
+      accepted_samples_per_sequence: 2000

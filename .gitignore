@@ -1,0 +1,17 @@
+__pycache__/
+.pytest_cache/
+*.egg-info/
+*.log
+.coverage
+.mypy_cache/
+build/
+dist/
+catalogs/
+output/
+reports/
+
+data/
+checkpoints/
+
+# Local anonymous manuscript; README assets are tracked separately.
+/ICRA27_1121_MS.pdf

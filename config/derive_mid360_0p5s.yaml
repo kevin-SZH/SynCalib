@@ -1,0 +1,27 @@
+# Control derivation: preserve samples, images, and labels while replacing point clouds.
+schema_version: lidar_modality_derivation_v1
+output_suffix: _mid360_0p5s
+coordinate_frame_policy: reuse_source_lidar_frame
+sample_policy: preserve_all_source_samples
+artifact_reuse: physical_copy
+quality_policy: preserve_source_primary_without_regrading
+target_profile: livox_mid360_nonrepeating
+
+target_lidar:
+  scanner_model: livox_mid360
+  # Four interleaved channels; each emits 5,000 beams per 0.1-second physical frame.
+  num_rings: 4
+  points_per_ring: 5000
+  vertical_fov_deg: [-7.2123, 52.164]
+  horizontal_fov_deg: [0.0, 360.0]
+  repeated_pattern: false
+  min_range_m: 0.1
+  max_range_m: 70.0
+  beam_pattern_file: mid360.csv
+  pattern_duration_s: 4.0
+  scan_frequency_hz: 10.0
+  beams_per_frame: 20000
+  # Use a contiguous 100,000-beam window with a random start in [0, 3.5] seconds.
+  accumulation_duration_s: 0.5
+  interleaved_channels: 4
+  pattern_row_count: 800000

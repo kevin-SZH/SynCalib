@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "extrinsic-manifold-data"
+version = "0.1.0"
+description = "Build physically consistent local SE(3) camera-LiDAR calibration datasets"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.21",
+    "scipy>=1.7",
+    "opencv-python>=4.5",
+    "matplotlib>=3.5",
+    "PyYAML>=6.0",
+    "threadpoolctl>=3.1",
+]
+
+[project.scripts]
+extrinsic-manifold-data = "extrinsic_manifold_data.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
