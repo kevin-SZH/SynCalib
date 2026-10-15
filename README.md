@@ -156,6 +156,17 @@ Exports declare `training_semantics: nominal_to_true_residual_v1` and
 `current_cmrnext_loader_compatible: false`. A training loader must explicitly
 implement these semantics before consuming the generated data.
 
+## Training Networks
+
+The authors modified the following calibration networks for training in the paper's
+experiments. Their experiment-specific training code is available here:
+
+- [CMRNext](https://github.com/kevin-SZH/CMRNext_train)
+- [CalibNet](https://github.com/ShuyangUni/lidar_camera_calibration)
+
+These repositories contain the authors' modified versions, rather than the original
+upstream implementations.
+
 ## Code Organization
 
 ```text
