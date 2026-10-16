@@ -8,7 +8,6 @@ Huihua Zhu, Shuyang Zhang<sup>†</sup>, Dongqing Chen,
 Zhuo Yu, Jianhao Jiao, Yilong Zhu,
 Xiaopin Zhong<sup>†</sup>, and Zongze Wu
 
-**Submitted to ICRA 2027**
 
 <img src="assets/method_overview.png" width="96%" alt="SynCalib data generation pipeline">
 
@@ -166,21 +165,6 @@ experiments. Their experiment-specific training code is available here:
 
 These repositories contain the authors' modified versions, rather than the original
 upstream implementations.
-
-## Code Organization
-
-```text
-src/extrinsic_manifold_data/
-  pair_pool.py           # source manifests and qualified frame pairs
-  sample_generation.py   # target extrinsics and physical candidates
-  sensors.py             # camera rendering and LiDAR simulation
-  quality_export.py      # quality gates, audits, and transactional export
-  generation.py          # public orchestration API
-  cli.py                 # command-line entry point
-```
-
-The public Python API consists of `GenerationOptions` and
-`generate_dataset(options)` from `extrinsic_manifold_data.generation`.
 
 ## Acknowledgements
 
