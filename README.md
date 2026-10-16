@@ -19,18 +19,6 @@ poses, it synthesizes perspective images and LiDAR scans whose geometry matches 
 controllable target extrinsic. The resulting data avoids the fixed-sensor shortcuts
 present in conventional calibration datasets.
 
-## Highlights
-
-- **Extrinsic-controllable synthesis.** Each image, point cloud, and true extrinsic is
-  generated from the same simulated geometry rather than by perturbing an existing
-  point cloud.
-- **Deployment-aligned supervision.** The network starts from a nominal factory
-  calibration `T0` and learns the complete left residual from `T0` to the true `Ti`.
-- **Multiple sensor profiles.** Different LiDAR models can be configured by adjusting the parameters according to their respective models.
-- **Auditable generation.** Scene holdouts, bidirectional overlap, projection quality,
-  residual coverage, reuse statistics, resumable progress, and transactional export
-  are recorded for every build.
-
 ## Pipeline
 
 Given a nominal calibration `T0`, we sample a left residual `delta_Ti` and set the
