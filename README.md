@@ -148,7 +148,7 @@ implement these semantics before consuming the generated data.
 The authors modified the following calibration networks for training in the paper's
 experiments. Their experiment-specific training code is available here:
 
-- [CMRNext](https://github.com/kevin-SZH/CMRNext_train)
+- [CMRNext](https://github.com/kevin-SZH/CMRNext)
 - [CalibNet](https://github.com/ShuyangUni/lidar_camera_calibration/tree/syncalib)
 
 These repositories contain the authors' modified versions, rather than the original
