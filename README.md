@@ -149,7 +149,7 @@ The authors modified the following calibration networks for training in the pape
 experiments. Their experiment-specific training code is available here:
 
 - [CMRNext](https://github.com/kevin-SZH/CMRNext_train)
-- [CalibNet](https://github.com/ShuyangUni/lidar_camera_calibration)
+- [CalibNet](https://github.com/ShuyangUni/lidar_camera_calibration/tree/syncalib)
 
 These repositories contain the authors' modified versions, rather than the original
 upstream implementations.
